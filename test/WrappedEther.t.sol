@@ -18,10 +18,20 @@ contract WETHTest is Test {
         //2.將 2 ether 轉到 weth 合約中
         //3.檢查 weth 合約中的 totalSupply() 會等於 weth 合約中的 balanceOf(Eva)
         vm.prank(Eva);
-        vm.deal(Eva, 2e18);
-        (bool success,) = address(weth).call{value:2e18}(abi.encodeWithSignature("depositWETH()")); 
+        vm.deal(Eva, 2 ether);
+        (bool success,) = address(weth).call{value:2 ether}(abi.encodeWithSignature("depositWETH()")); 
         require(success, "fail to deposit");    
         assertEq(weth.totalSupply(), weth.balanceOf(Eva));
+    }
+
+    //測試 User deposit 之後得到相同數量
+    function testUserGetWeth() public{
+        vm.startPrank(Eva);
+        vm.deal(Eva, 2 ether);
+        (bool success,) = address(weth).call{value:1 ether}(abi.encodeWithSignature("depositWETH()")); 
+        require(success, "fail to deposit");
+        assertEq(weth.balanceOf(Eva), 1 ether);
+        vm.stopPrank();
     }
 
     function testWithdraw() public {
@@ -38,6 +48,19 @@ contract WETHTest is Test {
         
         assertEq(weth.totalSupply(), 4e18);
         assertEq(weth.balanceOf(Eva), 4e18);
+        vm.stopPrank();
+    }
+
+    event LogAddressBalance(uint256 _balance);
+    // test Deposit emit
+    function testDepositEmit() public {
+        vm.startPrank(Eva);
+        vm.deal(Eva, 2 ether);
+        vm.expectEmit(true, false, false, false);
+        emit LogAddressBalance(1 ether);
+
+        (bool success,)= address(weth).call{value:1 ether}(abi.encodeWithSignature("depositWETH()"));
+        require(success, "fail to deposit");
         vm.stopPrank();
     }
 
@@ -73,4 +96,5 @@ contract WETHTest is Test {
         assertEq(weth.balanceOf(Amber), 0.3 ether);
 
     }
+
 }
